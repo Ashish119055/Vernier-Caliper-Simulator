@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>વર્નિયર કેલિપર સિમ્યુલેટર – ITI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#E8F0FF; --bg2:#E9FBF4; --panel:#FFFFFF; --ink:#141B34; --muted:#5A6482; --line:#D5DCEF;
+  --msr:#2F5BFF; --vc:#E6197A; --zero:#FF8A00; --ok:#00A86B; --chip:#F1F4FC;
+  --stage:#F7F9FF;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg1:#0E1430; --bg2:#0B1F22; --panel:#161D3A; --ink:#EEF1FF; --muted:#A3ACCB; --line:#2A3460;
+    --msr:#6E8BFF; --vc:#FF4FA0; --zero:#FFA940; --ok:#2EE59D; --chip:#1E2750; --stage:#121936;
+  }
+}
+:root[data-theme="dark"]{
+  --bg1:#0E1430; --bg2:#0B1F22; --panel:#161D3A; --ink:#EEF1FF; --muted:#A3ACCB; --line:#2A3460;
+  --msr:#6E8BFF; --vc:#FF4FA0; --zero:#FFA940; --ok:#2EE59D; --chip:#1E2750; --stage:#121936;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));background-attachment:fixed;
+  font-family:"Hind Vadodara","Noto Sans Gujarati","Shruti",system-ui,sans-serif;font-size:17px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:580px;margin:0 auto;padding:14px 14px 30px}
+header h1{font-size:1.6rem;line-height:1.15;margin:4px 0 2px;
+  background:linear-gradient(90deg,var(--msr),var(--vc) 60%,var(--zero));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{margin:0;color:var(--muted);font-size:.95rem}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:14px 0 10px;background:var(--panel);padding:5px;border-radius:14px;border:1px solid var(--line)}
+.tabs button{border:0;background:transparent;color:var(--muted);font:inherit;font-weight:600;padding:9px 4px;border-radius:10px;cursor:pointer}
+.tabs button.on{background:linear-gradient(90deg,var(--msr),var(--vc));color:#fff}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:0 0 auto;font:inherit;font-size:.9rem;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;white-space:nowrap}
+.chips button.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.stage{background:var(--stage);border:1px solid var(--line);border-radius:18px;overflow:hidden;position:relative;box-shadow:0 10px 30px -18px rgba(20,27,52,.45)}
+.cap{position:absolute;left:10px;right:10px;top:10px;z-index:3;background:rgba(20,27,52,.88);color:#fff;border-radius:12px;padding:8px 12px;
+  font-weight:700;font-size:1.02rem;text-align:center;transform:translateY(-140%);transition:transform .35s}
+.cap.on{transform:none}
+#cal{display:block;width:100%;height:auto;touch-action:none;cursor:ew-resize}
+.zoomwrap{border-top:1px dashed var(--line);position:relative}
+.ztag{position:absolute;right:10px;top:6px;font-size:.78rem;color:var(--muted);pointer-events:none}
+#zoom{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
+.readout{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+.readout small{color:var(--muted)}
+.pill{font-size:1.9rem;font-weight:700;font-variant-numeric:tabular-nums;padding:2px 16px;border-radius:14px;color:#fff;
+  background:linear-gradient(90deg,var(--msr),var(--vc))}
+.pill.hid{background:var(--chip);color:var(--muted)}
+.contact{font-size:.85rem;font-weight:700;color:var(--ok);opacity:0;transition:opacity .25s}
+.contact.on{opacity:1}
+.ctrl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 8px}
+.ctrl button{font:inherit;font-weight:700;font-size:1rem;padding:12px 0;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.ctrl button:active{transform:scale(.96)}
+input[type=range]{width:100%;accent-color:var(--vc);margin:4px 0}
+.demo{width:100%;font:inherit;font-weight:700;font-size:1.08rem;padding:13px;border:0;border-radius:14px;color:#fff;cursor:pointer;margin-top:6px;
+  background:linear-gradient(90deg,var(--zero),var(--vc));box-shadow:0 8px 20px -10px var(--vc)}
+.demo:disabled{opacity:.6}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:12px}
+.card h2{font-size:1.1rem;margin:0 0 10px}
+.eq{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-weight:700;font-variant-numeric:tabular-nums}
+.eq .c{padding:6px 12px;border-radius:12px;color:#fff;line-height:1.25;text-align:center}
+.eq .c small{display:block;font-size:.72rem;font-weight:600;opacity:.9}
+.c.m{background:var(--msr)} .c.v{background:var(--vc)} .c.t{background:var(--ok)}
+.eq .op{color:var(--muted);font-size:1.3rem}
+.pop{animation:pop .45s}
+@keyframes pop{0%{transform:scale(.7);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.lc{font-size:.95rem;color:var(--muted)}
+.lc b{color:var(--ink)}
+.ans{display:flex;gap:8px;margin-top:6px}
+.ans input{flex:1;min-width:0;font:inherit;font-size:1.3rem;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--stage);color:var(--ink);font-variant-numeric:tabular-nums}
+.btn{font:inherit;font-weight:700;padding:10px 16px;border-radius:12px;border:0;cursor:pointer;background:var(--msr);color:#fff}
+.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.fb{margin-top:10px;padding:10px 12px;border-radius:12px;display:none;font-size:.97rem}
+.fb.ok{display:block;background:color-mix(in srgb,var(--ok) 15%,transparent);border-left:4px solid var(--ok)}
+.fb.no{display:block;background:color-mix(in srgb,var(--vc) 12%,transparent);border-left:4px solid var(--vc)}
+.score{color:var(--muted);font-size:.9rem;margin-top:8px}
+.target{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--vc)}
+.hide{display:none!important}
+button:focus-visible,input:focus-visible{outline:3px solid var(--zero);outline-offset:2px}
+footer{text-align:center;color:var(--muted);font-size:.82rem;margin-top:18px}
+footer a{color:var(--msr);font-weight:600}
+@media (prefers-reduced-motion: reduce){.pop{animation:none}.cap{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>વર્નિયર કેલિપર</h1>
+    <p>0–150 mm, LC 0.02 mm. જૉ ખસેડો, લેન્સથી કાપો શોધો, રીડિંગ શીખો.</p>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="learn" class="on">શીખો</button>
+    <button data-tab="read">રીડિંગ લો</button>
+    <button data-tab="set">સેટ કરો</button>
+  </nav>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="stage" id="stage">
+    <div class="cap" id="cap"></div>
+    <svg id="cal" viewBox="0 0 420 215" aria-label="વર્નિયર કેલિપર"></svg>
+    <div class="zoomwrap">
+      <span class="ztag">🔍 લેન્સ ખેંચો</span>
+      <svg id="zoom" viewBox="0 0 460 180" aria-label="સ્કેલ અને લેન્સ"></svg>
+    </div>
+    <div class="readout">
+      <small>રીડિંગ</small>
+      <span class="contact" id="contact">✓ જોબને અડ્યું</span>
+      <span class="pill" id="pill">0.00 mm</span>
+    </div>
+  </div>
+
+  <div id="controls">
+    <div class="ctrl">
+      <button data-d="-50">−1.00</button>
+      <button data-d="-1">−0.02</button>
+      <button data-d="1">+0.02</button>
+      <button data-d="50">+1.00</button>
+    </div>
+    <input type="range" id="slider" min="0" max="7500" step="1" value="0" aria-label="જૉ ખસેડો">
+  </div>
+
+  <section id="p-learn">
+    <button class="demo" id="demo">▶ ડેમો જુઓ: રીડિંગ કેવી રીતે લેવું</button>
+    <div class="card">
+      <h2>રીડિંગ = MSR + (VC × LC)</h2>
+      <div class="eq" id="eq"></div>
+      <p class="lc" style="margin:10px 0 0">
+        <b style="color:var(--msr)">MSR</b>: વર્નિયરના 0 પહેલાનો મેઇન સ્કેલ કાપો &nbsp;·&nbsp;
+        <b style="color:var(--vc)">VC</b>: મેઇન સ્કેલ સાથે બરાબર મળતો વર્નિયર કાપો
+      </p>
+    </div>
+    <div class="card lc">
+      <h2 style="color:var(--ink)">લીસ્ટ કાઉન્ટ</h2>
+      મેઇન સ્કેલનો 1 કાપો = <b>1 mm</b> · વર્નિયરના <b>50 કાપા = 49 mm</b><br>
+      LC = 1 − 49/50 = <b>0.02 mm</b><br>
+      <span style="font-size:.88rem">મેઇન સ્કેલ પર 1, 2, 3 = 10, 20, 30 mm · વર્નિયર પર 1, 2, 3 = 0.1, 0.2, 0.3 mm</span>
+    </div>
+    <div class="card lc">
+      <h2 style="color:var(--ink)">ધ્યાનમાં રાખો</h2>
+      જોબ જૉની વચ્ચે સીધો રાખો, ત્રાંસો નહીં · જૉ હળવેથી અડાડો, દબાણ ન આપો · આંખ સ્કેલની બરાબર સામે રાખો (પેરેલેક્સ એરર) · માપતા પહેલા જૉ બંધ કરી ઝીરો ચકાસો · રીડિંગ પછી લોક સ્ક્રૂ ટાઇટ કરો
+    </div>
+  </section>
+
+  <section id="p-read" class="hide">
+    <div class="card">
+      <h2>જોબનું માપ વાંચો</h2>
+      <p class="lc" style="margin:0 0 6px">લેન્સને વર્નિયર પર ખેંચો, મળતો કાપો શોધો અને mm માં રીડિંગ લખો.</p>
+      <div class="ans">
+        <input id="rIn" inputmode="decimal" placeholder="દા.ત. 24.98" aria-label="તમારું રીડિંગ">
+        <button class="btn" id="rChk">ચકાસો</button>
+      </div>
+      <div class="fb" id="rFb"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn alt" id="rNew">નવો જોબ</button>
+        <button class="btn alt" id="rShow">જવાબ બતાવો</button>
+      </div>
+      <div class="score" id="rScore">સાચા: 0 / 0</div>
+    </div>
+  </section>
+
+  <section id="p-set" class="hide">
+    <div class="card">
+      <h2>આ માપ પર સેટ કરો</h2>
+      <div class="target" id="sTgt">0.00 mm</div>
+      <p class="lc" style="margin:4px 0 8px">જૉ ખસેડી કેલિપર આ માપ પર લાવો. રીડિંગ છુપાયેલું છે, લેન્સથી ચકાસો.</p>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="sChk">ચકાસો</button>
+        <button class="btn alt" id="sNew">નવું માપ</button>
+      </div>
+      <div class="fb" id="sFb"></div>
+      <div class="score" id="sScore">સાચા: 0 / 0</div>
+    </div>
+  </section>
+
+  <footer>
+    <a href="https://ashish119055.github.io/Micrometer/">માઇક્રોમીટર</a> ·
+    <a href="https://ashish119055.github.io/Digital-Multimeter-Simulator/">ડિજિટલ મલ્ટિમીટર</a><br>
+    Mechanic Diesel · Government ITI Maninagar
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+const el=(tag,a,p,t)=>{const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;if(p)p.appendChild(e);return e;};
+const cs=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt=x=>(x/50).toFixed(2);
+const parts=x=>({mm:Math.floor(x/50),vc:x%50});
+
+/* objects: size in 0.02 mm units */
+const OBJ={
+  free:{name:"✋ મુક્ત",type:null},
+  bolt:{name:"🔩 બોલ્ટ",type:"out",n:493,c1:"#9FB3C8",c2:"#5E7690",deco:"thread"},
+  pin:{name:"📌 પિસ્ટન પિન",type:"out",n:1249,c1:"#FFD166",c2:"#C9941A",deco:"hollow"},
+  valve:{name:"🔧 વાલ્વ સ્ટેમ",type:"out",n:398,c1:"#B8F2E6",c2:"#3AA58C",deco:"valve"},
+  journal:{name:"⚙️ ક્રેન્ક જર્નલ",type:"out",n:2797,c1:"#C3B1FF",c2:"#6D4FD8",deco:"oil"},
+  bush:{name:"⭕ બુશ (અંદરનું)",type:"in",n:1252,c1:"#FFB38A",c2:"#D9652B"},
+  liner:{name:"🛢️ લાઇનર (અંદરનું)",type:"in",n:5103,c1:"#9ED8FF",c2:"#2B86C8"}
+};
+
+const S={tab:"learn",obj:"pin",n:1400,stage:3,lens:0,lensUser:false,demo:false,job:null,target:0,sc:{read:[0,0],set:[0,0]}};
+
+/* ---------------- value handling ---------------- */
+function objNow(){ if(S.tab==="read")return S.job; if(S.tab==="set")return null; const o=OBJ[S.obj]; return o.type?o:null; }
+function clamp(x,dir){
+  x=Math.max(0,Math.min(7500,Math.round(x)));
+  const o=objNow(); if(!o)return x;
+  if(o.type==="out"){ if(x<o.n)x=o.n; else if(dir<0&&x-o.n<=20)x=o.n; }
+  else { if(x>o.n)x=o.n; else if(dir>0&&o.n-x<=20)x=o.n; }
+  return x;
+}
+function setN(x,dir){
+  if(S.demo||S.tab==="read")return;
+  S.n=clamp(x,dir==null?Math.sign(x-S.n):dir);
+  if(S.tab==="set")$("sFb").className="fb";
+  render();
+}
+
+/* ---------------- caliper drawing ---------------- */
+const F=34,K=2.2;
+function gradDef(defs,id,c1,c2,vert){const g=el("linearGradient",{id,x1:0,y1:0,x2:vert?0:1,y2:vert?1:0},defs);
+  el("stop",{offset:0,"stop-color":c1},g);el("stop",{offset:.5,"stop-color":c2},g);el("stop",{offset:1,"stop-color":c1},g);return g;}
+function drawCal(){
+  const s=$("cal");s.innerHTML="";
+  const defs=el("defs",{},s);
+  gradDef(defs,"st","#F4F7FA","#AEB9C4",true);
+  const sg=el("linearGradient",{id:"sl",x1:0,y1:0,x2:1,y2:1},defs);
+  el("stop",{offset:0,"stop-color":"#3D5AFE"},sg);el("stop",{offset:1,"stop-color":"#C51162"},sg);
+  const glow=el("filter",{id:"gl",x:"-50%",y:"-50%",width:"200%",height:"200%"},defs);
+  el("feGaussianBlur",{stdDeviation:3,result:"b"},glow);const mg=el("feMerge",{},glow);el("feMergeNode",{in:"b"},mg);el("feMergeNode",{in:"SourceGraphic"},mg);
+  const o=objNow(), val=S.n/50, sx=F+val*K, st3="#7E8B97";
+  const contact=o&&S.n===o.n;
+  // job (outside) behind jaws
+  if(o&&o.type==="out"){
+    gradDef(defs,"og",o.c2,o.c1,true);
+    const w=o.n/50*K, y0=112,h=62;
+    el("rect",{x:F,y:y0,width:w,height:h,rx:Math.min(8,w/3),fill:"url(#og)",stroke:o.c2},s);
+    if(o.deco==="thread")for(let x=F+3;x<F+w-2;x+=3.2)el("line",{x1:x,y1:y0+2,x2:x+1.5,y2:y0+h-2,stroke:o.c2,"stroke-width":.8,opacity:.7},s);
+    if(o.deco==="hollow")el("rect",{x:F+w*.3,y:y0+4,width:w*.4,height:h-8,rx:3,fill:o.c2,opacity:.35},s);
+    if(o.deco==="valve")el("path",{d:`M${F-2} ${y0+h} L${F+w+2} ${y0+h} L${F+w+14} ${y0+h+14} L${F-14} ${y0+h+14} Z`,fill:o.c2,opacity:.8},s);
+    if(o.deco==="oil")el("circle",{cx:F+w/2,cy:y0+h/2,r:5,fill:o.c2},s);
+  }
+  // beam
+  el("rect",{x:12,y:58,width:390,height:24,rx:3,fill:"url(#st)",stroke:st3},s);
+  for(let m=0;m<=150;m+=5){const x=F+m*K;el("line",{x1:x,y1:58,x2:x,y2:58+(m%10===0?9:5),stroke:"#1B2233","stroke-width":.7},s);
+    if(m%50===0&&m)el("text",{x,y:78,"font-size":7,"text-anchor":"middle",fill:"#1B2233"},s,m/10);}
+  // fixed jaws
+  el("path",{d:`M12 82 L${F} 82 L${F} 178 L${F-7} 198 L12 150 Z`,fill:"url(#st)",stroke:st3},s);
+  el("path",{d:`M12 58 L${F} 58 L${F+4} 22 L${F-4} 12 Z`,fill:"url(#st)",stroke:st3},s);
+  // inside job
+  if(o&&o.type==="in"){
+    gradDef(defs,"og",o.c1,o.c2,true);
+    const xL=F-4, xR=F-4+o.n/50*K;
+    el("rect",{x:xL-26,y:4,width:26,height:34,rx:4,fill:"url(#og)",stroke:o.c2},s);
+    el("rect",{x:xR,y:4,width:26,height:34,rx:4,fill:"url(#og)",stroke:o.c2},s);
+    el("text",{x:(xL+xR)/2,y:10,"font-size":8,"text-anchor":"middle",fill:o.c2,"font-weight":700},s,"↔ અંદરનો વ્યાસ");
+  }
+  // sliding assembly
+  const g=el("g",{},s);
+  el("path",{d:`M${sx} 82 L${sx+14} 82 L${sx+14} 150 L${sx+7} 198 L${sx} 178 Z`,fill:"url(#st)",stroke:st3},g);
+  el("path",{d:`M${sx} 58 L${sx+14} 58 L${sx-4} 12 L${sx-10} 22 Z`,fill:"url(#st)",stroke:st3},g);
+  el("rect",{x:sx,y:48,width:64,height:44,rx:6,fill:"url(#sl)"},g);
+  el("rect",{x:sx+4,y:80,width:56,height:10,rx:2,fill:"#E7ECF3"},g);
+  for(let k=0;k<=10;k++)el("line",{x1:sx+6+k*4.9,y1:80,x2:sx+6+k*4.9,y2:80+(k%5===0?7:4),stroke:"#1B2233","stroke-width":.6},g);
+  el("text",{x:sx+32,y:66,"font-size":8,"text-anchor":"middle",fill:"#fff","font-weight":700},g,"0.02 mm");
+  el("rect",{x:sx+26,y:38,width:12,height:11,rx:3,fill:"#FF8A00"},g);
+  el("circle",{cx:sx+48,cy:98,r:7,fill:"#FF8A00",stroke:"#B35F00"},g);
+  for(let k=-2;k<=2;k++)el("line",{x1:sx+48+k*2.4,y1:92,x2:sx+48+k*2.4,y2:104,stroke:"#B35F00","stroke-width":.7},g);
+  // depth rod
+  el("rect",{x:sx+64,y:66,width:Math.max(0,404-(sx+64)),height:3,fill:"#8A96A3"},s);
+  // contact glow
+  if(contact){
+    const c=cs("--ok");
+    if(o.type==="out"){el("line",{x1:F,y1:112,x2:F,y2:174,stroke:c,"stroke-width":3,filter:"url(#gl)"},s);el("line",{x1:sx,y1:112,x2:sx,y2:174,stroke:c,"stroke-width":3,filter:"url(#gl)"},s);}
+    else {el("circle",{cx:F-4,cy:14,r:4,fill:c,filter:"url(#gl)"},s);el("circle",{cx:sx-4,cy:14,r:4,fill:c,filter:"url(#gl)"},s);}
+  }
+  // labels
+  const mut=cs("--muted");
+  const lab=(x,y,t)=>el("text",{x,y,"font-size":9,fill:mut,"text-anchor":"middle","font-weight":600},s,t);
+  lab(23,210,"ફિક્સ્ડ જૉ"); lab(Math.min(sx+10,300),210,"સ્લાઇડિંગ જૉ");
+  if(!(o&&o.type==="in"))lab(F+40,12,"અંદરની જૉ");
+  if(o&&o.type==="out")el("text",{x:F+o.n/50*K/2,y:146,"font-size":8,"text-anchor":"middle",fill:"#1B2233","font-weight":700},s,o.name.split(" ").slice(1).join(" "));
+}
+
+/* ---------------- zoom + lens ---------------- */
+const X0=30,PX=8,BY=96,MAG=2.3,LR=50;
+function drawZoom(){
+  const s=$("zoom");s.innerHTML="";
+  const defs=el("defs",{},s);
+  gradDef(defs,"zb","#F6F8FB","#C4CDD8",true);
+  const vg=el("linearGradient",{id:"zv",x1:0,y1:0,x2:0,y2:1},defs);
+  el("stop",{offset:0,"stop-color":"#E3E9FF"},vg);el("stop",{offset:1,"stop-color":"#AFC0FF"},vg);
+  const cp=el("clipPath",{id:"lc"},defs);
+  const val=S.n/50, P=parts(S.n), st=S.stage, ink="#1B2233";
+  const msr=cs("--msr"),vc=cs("--vc"),zero=cs("--zero");
+  const g=el("g",{id:"scl"},defs);
+  el("rect",{x:0,y:26,width:460,height:BY-26,fill:"url(#zb)"},g);
+  el("rect",{x:X0-24,y:BY,width:49*PX+48,height:76,rx:6,fill:"url(#zv)",stroke:"#7D90D6"},g);
+  el("line",{x1:0,y1:BY,x2:460,y2:BY,stroke:ink,"stroke-width":.8},g);
+  if(st>=2){const x=X0+P.vc*0.98*PX;el("rect",{x:x-4,y:BY-34,width:8,height:66,rx:4,fill:vc,opacity:.18},g);}
+  for(let m=0;m<=150;m++){
+    const x=X0+(m-val)*PX; if(x<-6||x>466)continue;
+    const isM=st>=1&&m===P.mm, isV=st>=2&&m===P.mm+P.vc;
+    const len=m%10===0?30:(m%5===0?21:13);
+    el("line",{x1:x,y1:BY,x2:x,y2:BY-len,stroke:isV?vc:isM?msr:ink,"stroke-width":(isM||isV)?2.4:1},g);
+    if(m%10===0)el("text",{x,y:BY-35,"text-anchor":"middle","font-size":14,"font-weight":700,fill:isM?msr:ink},g,m/10);
+    if(isM&&m%10!==0)el("text",{x,y:BY-35,"text-anchor":"middle","font-size":11,"font-weight":700,fill:msr},g,m);
+  }
+  for(let k=0;k<=50;k++){
+    const x=X0+k*0.98*PX, isV=st>=2&&k===P.vc, isZ=st>=1&&k===0;
+    const len=k%10===0?28:(k%5===0?20:12);
+    el("line",{x1:x,y1:BY,x2:x,y2:BY+len,stroke:isV?vc:isZ?zero:ink,"stroke-width":(isV||isZ)?2.4:1},g);
+    if(k%5===0)el("text",{x,y:BY+44,"text-anchor":"middle","font-size":12,"font-weight":700,fill:isV?vc:ink},g,k/5);
+  }
+  if(st>=1)el("path",{d:`M${X0} ${BY+58} l-6 10 h12 z`,fill:zero},g);
+  if(st>=2){const x=X0+P.vc*0.98*PX;el("path",{d:`M${x} ${BY+58} l-6 10 h12 z`,fill:vc},g);}
+  el("use",{href:"#scl"},s);
+  el("text",{x:6,y:18,"font-size":11,fill:cs("--muted")},s,"મેઇન સ્કેલ (1 = 10 mm)");
+  el("text",{x:454,y:176,"font-size":10,"text-anchor":"end",fill:cs("--muted")},s,"વર્નિયર (1 = 0.1 mm)");
+  // lens
+  const lx=X0+S.lens*0.98*PX, ly=BY;
+  el("circle",{cx:lx,cy:ly,r:LR},cp);
+  el("line",{x1:lx+LR*.7,y1:ly+LR*.7,x2:lx+LR*1.25,y2:ly+LR*1.25,stroke:"#6B4E16","stroke-width":9,"stroke-linecap":"round"},s);
+  el("circle",{cx:lx,cy:ly,r:LR,fill:"#fff"},s);
+  const lg=el("g",{"clip-path":"url(#lc)"},s);
+  el("use",{href:"#scl",transform:`translate(${lx} ${ly}) scale(${MAG}) translate(${-lx} ${-ly})`},lg);
+  el("circle",{cx:lx,cy:ly,r:LR,fill:"none",stroke:"#F2B705","stroke-width":5},s);
+  el("circle",{cx:lx,cy:ly,r:LR-3,fill:"none",stroke:"#fff","stroke-width":1.2,opacity:.8},s);
+  el("path",{d:`M${lx-LR*.55} ${ly-LR*.45} a ${LR*.8} ${LR*.8} 0 0 1 ${LR*.5} ${-LR*.3}`,stroke:"#fff","stroke-width":3,fill:"none",opacity:.7,"stroke-linecap":"round"},s);
+}
+
+/* ---------------- panels ---------------- */
+function renderEq(pop){
+  const P=parts(S.n), st=S.stage;
+  const cls=pop?" pop":"";
+  $("eq").innerHTML=
+    `<span class="c m${cls}"><small>MSR</small>${P.mm} mm</span><span class="op">+</span>`+
+    `<span class="c v${cls}"><small>VC × 0.02</small>${st>=2?P.vc:"?"} × 0.02</span><span class="op">=</span>`+
+    `<span class="c t${cls}"><small>કુલ</small>${st>=3?fmt(S.n)+" mm":"?"}</span>`;
+}
+function render(pop){
+  if(S.tab==="learn"&&!S.demo)S.lens=parts(S.n).vc;
+  drawCal(); drawZoom();
+  const o=objNow(), hidden=S.tab!=="learn"&&!(S.tab==="read"&&S.stage>=3);
+  const pill=$("pill"); pill.textContent=hidden?"?.?? mm":fmt(S.n)+" mm"; pill.classList.toggle("hid",hidden);
+  $("contact").classList.toggle("on",!!(o&&S.n===o.n));
+  $("slider").value=S.n;
+  if(S.tab==="learn")renderEq(pop);
+}
+
+/* ---------------- interactions ---------------- */
+document.querySelectorAll(".ctrl button").forEach(b=>b.addEventListener("click",()=>setN(S.n+ +b.dataset.d)));
+$("slider").addEventListener("input",e=>setN(+e.target.value));
+(function(){const c=$("cal");let x0=null;
+  c.addEventListener("pointerdown",e=>{if(S.demo||S.tab==="read")return;x0=e.clientX;c.setPointerCapture(e.pointerId);});
+  c.addEventListener("pointermove",e=>{if(x0==null)return;const sc=420/c.getBoundingClientRect().width;
+    const d=(e.clientX-x0)*sc/K*50; if(Math.abs(d)>=1){setN(S.n+d,Math.sign(d));x0=e.clientX;}});
+  const end=()=>{x0=null;};c.addEventListener("pointerup",end);c.addEventListener("pointercancel",end);})();
+(function(){const z=$("zoom");let drag=false;
+  const mv=e=>{const r=z.getBoundingClientRect();const x=(e.clientX-r.left)*460/r.width;
+    S.lens=Math.max(0,Math.min(50,(x-X0)/(0.98*PX)));S.lensUser=true;drawZoom();};
+  z.addEventListener("pointerdown",e=>{if(S.demo)return;drag=true;z.setPointerCapture(e.pointerId);mv(e);});
+  z.addEventListener("pointermove",e=>{if(drag)mv(e);});
+  z.addEventListener("pointerup",()=>{drag=false;if(S.tab==="learn")setTimeout(()=>{if(!drag)drawZoom();},0);});
+  z.addEventListener("pointercancel",()=>{drag=false;});})();
+
+const chips=$("chips");
+Object.keys(OBJ).forEach(k=>{const b=document.createElement("button");b.textContent=OBJ[k].name;b.dataset.k=k;
+  b.onclick=()=>{if(S.demo)return;selectObj(k);};chips.appendChild(b);});
+function selectObj(k){
+  S.obj=k;[...chips.children].forEach(b=>b.classList.toggle("on",b.dataset.k===k));
+  const o=OBJ[k];
+  if(o.type==="out")S.n=Math.min(7500,o.n+400); else if(o.type==="in")S.n=Math.max(0,o.n-300);
+  render();
+}
+
+/* ---------------- demo ---------------- */
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function cap(t){const c=$("cap");if(t){c.textContent=t;c.classList.add("on");}else c.classList.remove("on");}
+function tween(from,to,ms,fn){return new Promise(res=>{const t0=performance.now();
+  (function step(t){let u=Math.min(1,(t-t0)/ms);u=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;fn(from+(to-from)*u);if(u<1)requestAnimationFrame(step);else res();})(t0);});}
+$("demo").onclick=async()=>{
+  if(S.demo)return;
+  if(!OBJ[S.obj].type)selectObj("pin");
+  const o=OBJ[S.obj]; S.demo=true; $("demo").disabled=true;
+  const start=o.type==="out"?Math.min(7500,o.n+900):Math.max(0,o.n-900);
+  S.stage=0;S.n=start;S.lens=0;render();
+  cap("1️⃣ જૉ જોબ પર હળવેથી અડાડો");await sleep(700);
+  await tween(start,o.n,1500,v=>{S.n=Math.round(v);drawCal();drawZoom();$("pill").textContent="?.?? mm";});
+  S.n=o.n;render();await sleep(900);
+  cap("2️⃣ વર્નિયરના 0 પહેલાનો કાપો = MSR");S.stage=1;S.lens=0;render(true);await sleep(2200);
+  cap("3️⃣ લેન્સથી મળતો કાપો શોધો");
+  const vc=parts(o.n).vc;
+  await tween(0,vc,1800,v=>{S.lens=v;drawZoom();});
+  S.stage=2;S.lens=vc;drawZoom();renderEq(true);await sleep(2000);
+  cap("4️⃣ રીડિંગ = MSR + VC × 0.02");S.stage=3;S.demo=false;render(true);
+  await sleep(2600);cap("");$("demo").disabled=false;
+};
+
+/* ---------------- read / set ---------------- */
+function randJob(){
+  const pool=Object.values(OBJ).filter(o=>o.type);
+  const b=pool[Math.floor(Math.random()*pool.length)];
+  const n=b.type==="in"?(500+Math.floor(Math.random()*5500)):(150+Math.floor(Math.random()*3500));
+  return Object.assign({},b,{n});
+}
+function newJob(){S.job=randJob();S.n=S.job.n;S.stage=0;S.lens=0;$("rIn").value="";$("rFb").className="fb";render();}
+const explain=x=>{const P=parts(x);return `${P.mm} + (${P.vc} × 0.02) = <b>${fmt(x)} mm</b>`;};
+const upd=k=>$(k==="read"?"rScore":"sScore").textContent=`સાચા: ${S.sc[k][0]} / ${S.sc[k][1]}`;
+$("rChk").onclick=()=>{
+  const u=Math.round(parseFloat($("rIn").value.trim().replace(",","."))*100),f=$("rFb");
+  if(isNaN(u)){f.className="fb no";f.innerHTML="mm માં આંકડો લખો, દા.ત. 24.98";return;}
+  S.sc.read[1]++;
+  if(u===S.job.n*2){S.sc.read[0]++;f.className="fb ok";f.innerHTML="🎉 સાચું! "+explain(S.job.n);}
+  else{f.className="fb no";f.innerHTML=`તમે લખ્યું ${(u/100).toFixed(2)} mm. સાચું: `+explain(S.job.n)+(u%2?"<br>યાદ રાખો: છેલ્લો આંકડો હંમેશા બેકી (0,2,4,6,8).":"");}
+  S.stage=3;S.lens=parts(S.job.n).vc;render();upd("read");
+};
+$("rIn").addEventListener("keydown",e=>{if(e.key==="Enter")$("rChk").click();});
+$("rNew").onclick=newJob;
+$("rShow").onclick=()=>{S.stage=3;S.lens=parts(S.job.n).vc;render();const f=$("rFb");f.className="fb no";f.innerHTML="જવાબ: "+explain(S.job.n);};
+function newTarget(){S.target=100+Math.floor(Math.random()*7000);$("sTgt").textContent=fmt(S.target)+" mm";$("sFb").className="fb";render();}
+$("sChk").onclick=()=>{S.sc.set[1]++;const f=$("sFb");
+  if(S.n===S.target){S.sc.set[0]++;f.className="fb ok";f.innerHTML="🎉 સાચું સેટ કર્યું! "+explain(S.n);}
+  else{f.className="fb no";f.innerHTML=`તમારું સેટિંગ: ${explain(S.n)}<br>ફરક: ${fmt(Math.abs(S.n-S.target))} mm, ફરી ગોઠવો.`;}
+  upd("set");};
+$("sNew").onclick=newTarget;
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  if(S.demo)return;
+  S.tab=b.dataset.tab;
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  ["learn","read","set"].forEach(m=>$("p-"+m).classList.toggle("hide",m!==S.tab));
+  $("controls").classList.toggle("hide",S.tab==="read");
+  chips.classList.toggle("hide",S.tab!=="learn");
+  $("cal").style.cursor=S.tab==="read"?"default":"ew-resize";
+  if(S.tab==="learn"){S.stage=3;selectObj(S.obj);}
+  if(S.tab==="read")newJob();
+  if(S.tab==="set"){S.stage=0;S.lens=0;S.n=0;newTarget();}
+});
+
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>render());
+selectObj("pin");
+})();
+</script>
+</body>
+</html>
